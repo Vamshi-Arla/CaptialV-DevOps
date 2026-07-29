@@ -1,7 +1,5 @@
 pipeline {
-   agent {
-        label 'linux-agent' // Offload execution to a Linux worker node
-    }
+   agent any
    
     environment {
         APP_NAME = 'single-page-web-app'
