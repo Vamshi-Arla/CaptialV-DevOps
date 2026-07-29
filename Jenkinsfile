@@ -30,25 +30,25 @@ pipeline {
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker Image: ${APP_NAME}:${IMAGE_TAG}..."
-               // bat "docker build -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest ."
+               bat "docker build -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest ."
             }
         }
 
         stage('Deploy Container') {
             steps {
                 echo 'Deploying application container...'
-                // bat """
-                //     # Stop and remove previous container instance if exists
-                //     docker stop ${APP_NAME}-container || true
-                //     docker rm ${APP_NAME}-container || true
+                bat """
+                    # Stop and remove previous container instance if exists
+                    docker stop ${APP_NAME}-container || true
+                    docker rm ${APP_NAME}-container || true
 
-                //     # Run new container
-                //     docker run -d \\
-                //         -p ${APP_PORT}:80 \\
-                //         --name ${APP_NAME}-container \\
-                //         --restart unless-stopped \\
-                //         ${APP_NAME}:${IMAGE_TAG}
-                // """
+                    # Run new container
+                    docker run -d \\
+                        -p ${APP_PORT}:80 \\
+                        --name ${APP_NAME}-container \\
+                        --restart unless-stopped \\
+                        ${APP_NAME}:${IMAGE_TAG}
+                """
             }
         }
 
