@@ -1,10 +1,6 @@
 pipeline {
-   agent {
-        docker {
-            image 'node:18-alpine'
-        }
-    }
-
+   agent  any
+   
     environment {
         APP_NAME = 'single-page-web-app'
         APP_PORT = '8081'
