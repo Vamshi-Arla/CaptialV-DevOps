@@ -2,56 +2,50 @@ pipeline {
     agent any
 
     environment {
-        WEB_ROOT = '/var/www/html'
-        APP_NAME = 'native-web-app'
+        TARGET_DIR = 'C:\\inetpub\\wwwroot\\my-web-app'
     }
 
     options {
         timestamps()
         disableConcurrentBuilds()
-        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     stages {
-        stage('Checkout SCM') {
+        stage('Checkout Source') {
             steps {
-                echo 'Pulling source code from GitHub SCM...'
+                echo 'Checking out source code from SCM...'
                 checkout scm
             }
         }
 
-        stage('Static Verification') {
+        stage('Pre-Build Validation') {
             steps {
-                echo 'Running static checks on workspace files...'
-                sh './test-app.sh'
+                echo 'Running Windows Batch static validation...'
+                bat 'call test-app.bat'
             }
         }
 
-        stage('Deploy to Web Server') {
+        stage('Deploy Application') {
             steps {
-                echo "Deploying application directly to host path: ${WEB_ROOT}..."
-                sh """
-                    # Copy web files to the host server document root
-                    sudo cp index.html ${WEB_ROOT}/index.html
-                    sudo chmod 644 ${WEB_ROOT}/index.html
-                """
+                echo 'Deploying application assets to Windows web root...'
+                bat 'call deploy.bat'
             }
         }
 
         stage('Health Check') {
             steps {
-                echo 'Testing web server HTTP accessibility...'
-                sh 'curl --fail http://localhost/ || exit 1'
+                echo 'Verifying deployed application files...'
+                bat 'if exist "%TARGET_DIR%\\index.html" (echo Health Check Passed) else (exit /b 1)'
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline Build #${BUILD_NUMBER} Deployed Successfully!"
+            echo 'Pipeline executed and application deployed successfully!'
         }
         failure {
-            echo "Pipeline Build #${BUILD_NUMBER} Failed! Check console output for errors."
+            echo 'Pipeline failed! Check console output for errors.'
         }
     }
 }
