@@ -23,21 +23,21 @@ pipeline {
         stage('Pre-Build Static Validation') {
             steps {
                 echo 'Executing static validation test script...'
-                sh './test-app.sh'
+                bat 'test-app.bat'
             }
         }
         
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker Image: ${APP_NAME}:${IMAGE_TAG}..."
-                sh "docker build -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest ."
+                bat "docker build -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest ."
             }
         }
 
         stage('Deploy Container') {
             steps {
                 echo 'Deploying application container...'
-                sh """
+                bat """
                     # Stop and remove previous container instance if exists
                     docker stop ${APP_NAME}-container || true
                     docker rm ${APP_NAME}-container || true
@@ -56,7 +56,7 @@ pipeline {
             steps {
                 echo 'Validating deployment health...'
                 sleep time: 3, unit: 'SECONDS'
-                sh """
+                bat """
                     curl --fail http://localhost:${APP_PORT} || (echo "Health check failed!" && exit 1)
                 """
             }
