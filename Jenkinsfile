@@ -1,77 +1,57 @@
 pipeline {
-   agent any
-   
+    agent any
+
     environment {
-        APP_NAME = 'single-page-web-app'
-        APP_PORT = '8081'
-        IMAGE_TAG = "v1.0.${BUILD_NUMBER}"
+        WEB_ROOT = '/var/www/html'
+        APP_NAME = 'native-web-app'
     }
 
     options {
-        timeout(time: 15, unit: 'MINUTES')
+        timestamps()
         disableConcurrentBuilds()
+        buildDiscarder(logRotator(numToKeepStr: '10'))
     }
 
     stages {
         stage('Checkout SCM') {
             steps {
-                echo 'Checking out source code from GitHub...'
+                echo 'Pulling source code from GitHub SCM...'
                 checkout scm
             }
         }
-        
-        stage('Pre-Build Static Validation') {
+
+        stage('Static Verification') {
             steps {
-                echo 'Executing static validation test script...'
-                //sh './test-app.sh'
-            }
-        }
-        
-        stage('Build Docker Image') {
-            steps {
-                echo "Building Docker Image: ${APP_NAME}:${IMAGE_TAG}..."
-               //bat "docker build -t ${APP_NAME}:${IMAGE_TAG} -t ${APP_NAME}:latest ."
+                echo 'Running static checks on workspace files...'
+                sh './test-app.sh'
             }
         }
 
-        stage('Deploy Container') {
+        stage('Deploy to Web Server') {
             steps {
-                echo 'Deploying application container...'
-                // bat """
-                //     # Stop and remove previous container instance if exists
-                //     docker stop ${APP_NAME}-container || true
-                //     docker rm ${APP_NAME}-container || true
-
-                //     # Run new container
-                //     docker run -d \\
-                //         -p ${APP_PORT}:80 \\
-                //         --name ${APP_NAME}-container \\
-                //         --restart unless-stopped \\
-                //         ${APP_NAME}:${IMAGE_TAG}
+                echo "Deploying application directly to host path: ${WEB_ROOT}..."
+                sh """
+                    # Copy web files to the host server document root
+                    sudo cp index.html ${WEB_ROOT}/index.html
+                    sudo chmod 644 ${WEB_ROOT}/index.html
                 """
             }
         }
 
         stage('Health Check') {
             steps {
-                echo 'Validating deployment health...'
-                sleep time: 3, unit: 'SECONDS'
-                // bat """
-                //     curl --fail http://localhost:${APP_PORT} || (echo "Health check failed!" && exit 1)
-                // """
+                echo 'Testing web server HTTP accessibility...'
+                sh 'curl --fail http://localhost/ || exit 1'
             }
         }
     }
 
     post {
         success {
-            echo "Pipeline executed successfully! Application is live at http://localhost:${APP_PORT}"
+            echo "Pipeline Build #${BUILD_NUMBER} Deployed Successfully!"
         }
         failure {
-            echo "Pipeline execution failed. Rolling back or inspecting logs required."
-        }
-        always {
-            cleanWs() // Workspace hygiene post-build
+            echo "Pipeline Build #${BUILD_NUMBER} Failed! Check console output for errors."
         }
     }
 }
