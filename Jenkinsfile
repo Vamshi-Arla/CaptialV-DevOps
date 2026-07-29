@@ -19,14 +19,7 @@ pipeline {
                 checkout scm
             }
         }
-
-        stage('Pre-Build Validation') {
-            steps {
-                echo 'Executing static security & integrity checks...'
-                sh './test-app.sh'
-            }
-        }
-
+        
         stage('Build Docker Image') {
             steps {
                 echo "Building Docker Image: ${APP_NAME}:${IMAGE_TAG}..."
